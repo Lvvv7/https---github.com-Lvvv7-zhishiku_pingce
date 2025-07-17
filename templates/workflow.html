@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>API批量测试 | 知识库评测系统</title>
+    <link href="/static/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">知识库评测系统</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="/">文档上传</a></li>
+                <li class="nav-item"><a class="nav-link" href="/result">结果预览</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/workflow">API批量测试</a></li>
+                <li class="nav-item"><a class="nav-link" href="/logs">历史记录</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <h2 class="mb-4">API批量测试</h2>
+    <form id="workflowForm">
+        <div class="mb-3">
+            <label class="form-label">API地址（每行一个）</label>
+            <textarea name="api_urls" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Authorization</label>
+            <input type="text" name="auth" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">开始批量测试</button>
+    </form>
+    <div class="mt-4">
+        <h4>待测问题</h4>
+        <ul>
+            {% for q in questions %}
+            <li>{{ q }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="mt-4">
+        <h4>测试结果</h4>
+        <table class="table table-bordered table-hover" id="resultTable">
+            <thead>
+                <tr>
+                    <th>API URL</th>
+                    <th>问题</th>
+                    <th>响应内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr>
+                    <td>{{ r.url }}</td>
+                    <td>{{ r.question }}</td>
+                    <td><div class="markdown-body">{{ r.resp|markdown }}</div></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    document.getElementById('workflowForm').onsubmit = function(e) {
+        e.preventDefault();
+        const api_urls = this.api_urls.value.trim().split(/\r?\n/).filter(x=>x);
+        const auth = this.auth.value.trim();
+        const questions = JSON.parse('{{ questions|tojson|safe }}');
+        const table = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+        table.innerHTML = '';
+        let idx = 0;
+        function next() {
+            if(idx >= api_urls.length * questions.length) return;
+            const url = api_urls[Math.floor(idx/questions.length)];
+            const q = questions[idx%questions.length];
+            fetch('/workflow_api', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `url=${encodeURIComponent(url)}&auth=${encodeURIComponent(auth)}&question=${encodeURIComponent(q)}`
+            }).then(res=>res.json()).then(data=>{
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${data.url}</td><td>${data.question}</td><td><div class='markdown-body'>${marked.parse(data.resp)}</div></td>`;
+                table.appendChild(tr);
+                idx++;
+                next();
+            });
+        }
+        next();
+    };
+</script>
+</body>
+</html>

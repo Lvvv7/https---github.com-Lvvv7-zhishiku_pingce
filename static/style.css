@@ -1,0 +1,11 @@
+body { background: #f8fafc; min-height: 100vh; }
+.container { max-width: 800px; margin-top: 60px; margin-bottom: 60px; }
+.upload-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); padding: 32px; }
+h2 { font-weight: 700; margin-bottom: 24px; color: #1a202c; }
+.form-label { font-weight: 500; color: #4a5568; }
+.upload-zone { border: 2px dashed #cbd5e0; border-radius: 8px; padding: 40px 20px; text-align: center; background: #f7fafc; cursor: pointer; transition: all 0.3s ease; }
+.upload-zone:hover { border-color: #4299e1; background: #ebf8ff; }
+.status-card { margin-top: 24px; display: none; }
+.loading-spinner { display: none; margin: 20px auto; }
+#downloadBtn { display: none; margin-top: 16px; }
+.alert { display: none; margin-top: 16px; }
